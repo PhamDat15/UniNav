@@ -60,7 +60,7 @@ export function evaluateUniversityMethods(scores: ExamScores, program: Universit
     }
   }
 
-  const accepts = (block: string) => program.subjectBlocks.includes(block);
+  const accepts = (block: string) => program.subjectBlocks?.includes(block) || false;
 
   const calcBlock = (sub1: number, sub2: number, sub3: number, sub1Name: string, sub2Name: string, sub3Name: string) => {
     if (program.scoreCalculation && program.scoreCalculation.scale === 40 && program.scoreCalculation.multiplierSubject) {
@@ -177,7 +177,7 @@ export function calculateMatch(profile: UserProfile, program: UniversityProgram)
   }
 
   if (profile.traits && profile.traits.length > 0) {
-    const matchingTraits = profile.traits.filter(t => program.targetTraits.includes(t));
+    const matchingTraits = profile.traits.filter(t => (program.targetTraits || []).includes(t));
     if (matchingTraits.length > 0) {
       suitabilityScore += (matchingTraits.length * 10);
       reasoning.push(`Tính cách [${matchingTraits.join(', ')}] phù hợp ngành nghề.`);
@@ -195,7 +195,7 @@ export function calculateMatch(profile: UserProfile, program: UniversityProgram)
   }
 
   if (profile.targetBlock && profile.targetBlock !== 'All' && profile.targetBlock.trim() !== '') {
-    const isBlockMatch = program.subjectBlocks.includes(profile.targetBlock) || 
+    const isBlockMatch = (program.subjectBlocks || []).includes(profile.targetBlock) || 
                          (program.specialExams && program.specialExams.some(e => e.toUpperCase().includes(profile.targetBlock!.toUpperCase()))) ||
                          (profile.targetBlock === 'Học bạ' && program.talentAdmission && program.talentAdmission.toLowerCase().includes('học bạ'));
     if (isBlockMatch) {

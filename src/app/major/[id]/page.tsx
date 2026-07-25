@@ -43,20 +43,6 @@ export default function MajorDetailPage() {
   const feePerCredit = program.feePerCredit || 0;
   const creditsPerSemester = program.creditsPerSemester || 0;
 
-  const handlePostReview = () => {
-    if (!newReview.trim()) return;
-    const review: Review = {
-      id: Date.now().toString(),
-      author: newAuthor.trim() || 'Người dùng ẩn danh',
-      date: new Date().toLocaleDateString('vi-VN'),
-      content: newReview,
-      rating: 5,
-      aspects: { teaching: 5, facilities: 5, environment: 5 }
-    };
-    setReviewsList([review, ...reviewsList]);
-    setNewReview('');
-    setNewAuthor('');
-  };
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px' }}>

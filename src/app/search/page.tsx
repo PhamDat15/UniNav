@@ -96,7 +96,7 @@ export default function SearchPage() {
     if (profile.targetBlock && profile.targetBlock !== 'All' && profile.targetBlock.trim() !== '') {
       finalResults = finalResults.filter(r => {
         const bl = profile.targetBlock!;
-        return r.program.subjectBlocks.includes(bl) || 
+        return (r.program.subjectBlocks || []).includes(bl) || 
                (r.program.specialExams && r.program.specialExams.some(e => e.toUpperCase().includes(bl.toUpperCase()))) ||
                (bl === 'Học bạ' && r.program.talentAdmission && r.program.talentAdmission.toLowerCase().includes('học bạ'));
       });

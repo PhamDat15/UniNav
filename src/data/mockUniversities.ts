@@ -29,9 +29,10 @@ export interface UniversityProgram {
   feePerYear: number;
   averageScore: number;
   employmentRate: number;
-  academicPressure: number;
-  clubActivities: number;
-  targetTraits: string[];
+  academicPressure?: number;
+  clubActivities?: number;
+  targetTraits?: string[];
+  facilities?: number;
   location: string;
   quota?: number;
   historicalScores?: Record<string, number>;

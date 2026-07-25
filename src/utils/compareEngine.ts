@@ -119,15 +119,16 @@ export function generateCompareReport(items: MatchResult[], profile?: UserProfil
   }
 
   // e. Môi trường Câu lạc bộ & Ngoại khóa năng động nhất
-  const bestClubs = [...items].sort((a, b) => b.program.clubActivities - a.program.clubActivities)[0];
-  if (bestClubs && bestClubs.program.clubActivities >= 80) {
+  const bestClubs = [...items].sort((a, b) => (b.program.clubActivities || 80) - (a.program.clubActivities || 80))[0];
+  if (bestClubs && (bestClubs.program.clubActivities || 80) >= 80) {
+    const score = bestClubs.program.clubActivities || 85;
     bestInClass.push({
       category: "Môi Trường Ngoại Khóa & CLB Năng động Nhất",
       icon: "🔥",
       schoolName: bestClubs.program.name,
       majorName: bestClubs.program.major,
-      scoreDisplay: `CLB ${bestClubs.program.clubActivities}/100`,
-      reasoning: `Chỉ số phong trào sinh viên đạt ${bestClubs.program.clubActivities}/100. Nơi tuyệt vời để bứt phá rào cản bản thân, mở rộng mối quan hệ (networking), rèn luyện kỹ năng mềm qua hàng chục CLB chuyên môn và nghệ thuật sôi nổi.`,
+      scoreDisplay: `CLB ${score}/100`,
+      reasoning: `Chỉ số phong trào sinh viên đạt ${score}/100. Nơi tuyệt vời để bứt phá rào cản bản thân, mở rộng mối quan hệ (networking), rèn luyện kỹ năng mềm qua hàng chục CLB chuyên môn và nghệ thuật sôi nổi.`,
       color: "#ea580c"
     });
   }
@@ -161,7 +162,7 @@ export function generateCompareReport(items: MatchResult[], profile?: UserProfil
         title: `⚖️ Bàn cân Chi phí & Môi trường: [${cheapItem.program.name}] và [${expensiveItem.program.name}]`,
         schoolA: cheapItem.program.name,
         schoolB: expensiveItem.program.name,
-        analysis: `• ${cheapItem.program.name} mang lại lợi thế tiết kiệm tới ~${diffTr} Triệu đồng mỗi năm học so với ${expensiveItem.program.name}. Khoản chênh lệch này có thể dùng để đầu tư các khóa học ngoại ngữ, thi chứng chỉ quốc tế hoặc trang trải sinh hoạt phí.\n\n• Tuy nhiên, sự đầu tư tài chính nhỉnh hơn tại ${expensiveItem.program.name} (${(expensiveItem.program.feePerYear/1000000).toFixed(1)} Tr/năm) được đền đáp xứng đáng bằng hệ thống cơ sở vật chất đẳng cấp (điểm CSVC ${expensiveItem.program.facilities || 90}/100) cùng chỉ số năng động ngoại khóa ${expensiveItem.program.clubActivities}/100. Bạn cần xem xét ngân sách 4 năm của gia đình để chọn hướng đầu tư sáng suốt.`
+        analysis: `• ${cheapItem.program.name} mang lại lợi thế tiết kiệm tới ~${diffTr} Triệu đồng mỗi năm học so với ${expensiveItem.program.name}. Khoản chênh lệch này có thể dùng để đầu tư các khóa học ngoại ngữ, thi chứng chỉ quốc tế hoặc trang trải sinh hoạt phí.\n\n• Tuy nhiên, sự đầu tư tài chính nhỉnh hơn tại ${expensiveItem.program.name} (${(expensiveItem.program.feePerYear/1000000).toFixed(1)} Tr/năm) được đền đáp xứng đáng bằng hệ thống cơ sở vật chất đẳng cấp (điểm CSVC ${expensiveItem.program.facilities || 90}/100) cùng chỉ số năng động ngoại khóa ${expensiveItem.program.clubActivities || 85}/100. Bạn cần xem xét ngân sách 4 năm của gia đình để chọn hướng đầu tư sáng suốt.`
       });
     }
   } else {

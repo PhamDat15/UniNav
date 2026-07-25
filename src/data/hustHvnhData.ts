@@ -13,7 +13,7 @@ const hustPriorityPolicies = ["Cộng điểm quy đổi chứng chỉ IELTS/TOE
 const hustConversionFormulas = { "Đánh giá tư duy - TSA (ĐHBK)": "Xét trực tiếp thang 100: Điểm TSA + Điểm ưu tiên" };
 const hustPriorityDetails = [
   {
-    type: 'ielts',
+    type: 'ielts' as const,
     title: 'Bảng quy đổi điểm IELTS sang thang 10 (HUST 2026)',
     table: {
       '5.0': '8.0 điểm',
@@ -75,14 +75,14 @@ export const hustHvnhData: UniversityProgram[] = [
   {
     id: "HVNH-TCNH", name: "Học viện Ngân hàng", major: "Ngân hàng", quota: 380, type: "Công lập",
     feePerYear: 24000000, averageScore: 26.2, employmentRate: 93, academicPressure: 78, clubActivities: 92,
-    targetTraits: ["E", "C"], location: "Hà Nội", quota: 350,
+    targetTraits: ["E", "C"], location: "Hà Nội",
     historicalScores: { "2023": 25.70, "2024": 26.20, "2025": 24.93 },
     subjectBlocks: hvnhSubjectBlocks, specialExams: hvnhSpecialExams, talentAdmission: hvnhTalentAdmission, priorityPolicies: hvnhPriorityPolicies, conversionFormulas: hvnhConversionFormulas
   },
   {
     id: "HVNH-KT", name: "Học viện Ngân hàng", major: "Kế toán", quota: 300, type: "Công lập",
     feePerYear: 24000000, averageScore: 26.0, employmentRate: 94, academicPressure: 82, clubActivities: 85,
-    targetTraits: ["C", "E"], location: "Hà Nội", quota: 250,
+    targetTraits: ["C", "E"], location: "Hà Nội",
     historicalScores: { "2023": 25.80, "2024": 26.25, "2025": 24.69 },
     subjectBlocks: hvnhSubjectBlocks, specialExams: hvnhSpecialExams, talentAdmission: hvnhTalentAdmission, priorityPolicies: hvnhPriorityPolicies, conversionFormulas: hvnhConversionFormulas
   },
@@ -103,7 +103,7 @@ export const hustHvnhData: UniversityProgram[] = [
   {
     id: "HVNH-NNA", name: "Học viện Ngân hàng", major: "Ngôn ngữ Anh", quota: 150, type: "Công lập",
     feePerYear: 22000000, averageScore: 25.8, employmentRate: 89, academicPressure: 75, clubActivities: 90,
-    targetTraits: ["S", "A"], location: "Hà Nội", quota: 100,
+    targetTraits: ["S", "A"], location: "Hà Nội",
     historicalScores: { "2023": 24.90, "2024": 25.80, "2025": 23.41 },
     subjectBlocks: hvnhSubjectBlocks, specialExams: hvnhSpecialExams, talentAdmission: hvnhTalentAdmission, priorityPolicies: hvnhPriorityPolicies, conversionFormulas: hvnhConversionFormulas
   }

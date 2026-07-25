@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { mockUniversities } from '../../data/mockUniversities';
+import { mockUniversities, UniversityProgram } from '../../data/mockUniversities';
 import { massiveUniversities } from '../../data/massiveUniversities';
 import { calculateMatch, UserProfile, MatchResult } from '../../utils/matchEngine';
 import { generateCompareReport, CompareReport } from '../../utils/compareEngine';
