@@ -30,7 +30,7 @@ const ExpandableDescription = ({ text }: { text?: string }) => {
 
 export default function CommunityPage() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
-  const { isLoggedIn, setShowLoginModal, userName, avatarUrl } = useAuth();
+  const { isLoggedIn, setShowLoginModal, user } = useAuth();
   const router = useRouter();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -47,8 +47,8 @@ export default function CommunityPage() {
     }
     
     const threadId = `th_${Date.now()}`;
-    const authorName = newPostAnonymous ? "Ẩn danh" : (userName || "PigMoney");
-    const authorAvatar = newPostAnonymous ? "/avatars/anon.png" : (avatarUrl || "/avatars/avatar3.png");
+    const authorName = newPostAnonymous ? "Ẩn danh" : (user?.displayName || "PigMoney");
+    const authorAvatar = newPostAnonymous ? "/avatars/anon.png" : (user?.avatar || "/avatars/avatar3.png");
     
     const newThread = {
       id: threadId,
