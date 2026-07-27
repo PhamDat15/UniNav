@@ -21,8 +21,25 @@ export default function MajorDetailPage() {
     let found = mockUniversities.find(u => cleanId(u.id) === target || u.id === decodedId) || massiveUniversities.find(u => cleanId(u.id) === target || u.id === decodedId);
     
     if (found) {
-
       setProgram(found);
+
+      try {
+        const viewedData = localStorage.getItem('viewed_majors');
+        let viewed = viewedData ? JSON.parse(viewedData) : [];
+        if (!Array.isArray(viewed)) viewed = [];
+        
+        viewed = viewed.filter((vId: string) => vId !== found.id);
+        viewed.unshift(found.id);
+        
+        if (viewed.length > 20) {
+          viewed = viewed.slice(0, 20);
+        }
+        
+        localStorage.setItem('viewed_majors', JSON.stringify(viewed));
+        window.dispatchEvent(new Event('storage'));
+      } catch (e) {
+        console.error("Error saving viewed major:", e);
+      }
     }
     setIsLoading(false);
   }, [params?.id]);

@@ -162,15 +162,15 @@ export default function LookupPage() {
 
       <div className="data-table-container">
         <table className="data-table">
-          <thead style={{ position: 'sticky', top: '79px', zIndex: 20 }}>
+          <thead style={{ position: 'sticky', top: '63px', zIndex: 20 }}>
             <tr>
-              <th style={{ width: '50px', position: 'sticky', top: '79px', zIndex: 20 }}>STT</th>
-              <th style={{ position: 'sticky', top: '79px', zIndex: 20 }}>Tên Trường & Ngành</th>
-              <th style={{ width: '120px', position: 'sticky', top: '79px', zIndex: 20 }}>Tổ Hợp</th>
-              <th style={{ textAlign: 'center', position: 'sticky', top: '79px', zIndex: 20 }}>2023</th>
-              <th style={{ textAlign: 'center', position: 'sticky', top: '79px', zIndex: 20 }}>2024</th>
-              <th style={{ textAlign: 'center', position: 'sticky', top: '79px', zIndex: 20 }}>2025</th>
-              <th style={{ width: '150px', textAlign: 'center', position: 'sticky', top: '79px', zIndex: 20 }}>Hành Động</th>
+              <th style={{ width: '50px', position: 'sticky', top: '63px', zIndex: 20 }}>STT</th>
+              <th style={{ position: 'sticky', top: '63px', zIndex: 20 }}>Tên Trường & Ngành</th>
+              <th style={{ width: '120px', position: 'sticky', top: '63px', zIndex: 20 }}>Tổ Hợp</th>
+              <th style={{ textAlign: 'center', position: 'sticky', top: '63px', zIndex: 20 }}>2023</th>
+              <th style={{ textAlign: 'center', position: 'sticky', top: '63px', zIndex: 20 }}>2024</th>
+              <th style={{ textAlign: 'center', position: 'sticky', top: '63px', zIndex: 20 }}>2025</th>
+              <th style={{ width: '150px', textAlign: 'center', position: 'sticky', top: '63px', zIndex: 20 }}>Hành Động</th>
             </tr>
           </thead>
           <tbody>
@@ -405,15 +405,15 @@ export default function LookupPage() {
                 </div>
                 
                 <div style={{ marginTop: '32px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
-                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
                     <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Học phí ước tính</span>
                     <strong style={{ fontSize: '1.1rem', color: 'var(--text-dark)' }}>{(selectedProgram.feePerYear / 1000000).toFixed(1)} Tr/năm</strong>
                   </div>
-                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
                     <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Chỉ tiêu xét tuyển</span>
                     <strong style={{ fontSize: '1.1rem', color: '#16a34a' }}>{selectedProgram.quota ? selectedProgram.quota : 'Đang cập nhật'}</strong>
                   </div>
-                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
                     <span style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Tỉnh/Thành phố</span>
                     <strong style={{ fontSize: '1.1rem', color: 'var(--text-dark)' }}>{selectedProgram.name.includes('TP.HCM') || selectedProgram.name.includes('Hồ Chí Minh') ? 'TP.HCM' : selectedProgram.name.includes('Đà Nẵng') ? 'Đà Nẵng' : 'Hà Nội'}</strong>
                   </div>

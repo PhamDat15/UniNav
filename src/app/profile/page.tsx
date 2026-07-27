@@ -8,9 +8,11 @@ export default function ProfilePage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [skipTest, setSkipTest] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(false);
   
   const [profile, setProfile] = useState<UserProfile>({
     scores: {},
+    transcriptScores: {},
     maxFee: 30000000,
     location: 'Hà Nội',
     traits: []
@@ -22,6 +24,17 @@ export default function ProfilePage() {
       ...profile,
       scores: {
         ...profile.scores,
+        [field]: isNaN(num) ? undefined : Math.max(0, num)
+      }
+    });
+  };
+
+  const updateTranscriptScore = (field: keyof ExamScores, value: string) => {
+    const num = parseFloat(value);
+    setProfile({
+      ...profile,
+      transcriptScores: {
+        ...(profile.transcriptScores || {}),
         [field]: isNaN(num) ? undefined : Math.max(0, num)
       }
     });
@@ -124,15 +137,49 @@ export default function ProfilePage() {
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>IELTS (0 - 9.0)</label><input type="number" step="0.5" max="9" value={profile.scores.ielts || ''} onChange={e => updateScore('ielts', e.target.value)} style={inputStyle} placeholder="Ví dụ: 6.5" /></div>
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ĐGNL ĐHQGHN (HSA)</label><input type="number" max="150" placeholder="Thang 150" value={profile.scores.hsa || ''} onChange={e => updateScore('hsa', e.target.value)} style={inputStyle} /></div>
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ĐGTD Bách Khoa (TSA)</label><input type="number" max="100" placeholder="Thang 100" value={profile.scores.tsa || ''} onChange={e => updateScore('tsa', e.target.value)} style={inputStyle} /></div>
-                <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Học bạ THPT (GPA)</label><input type="number" step="0.1" max="10" placeholder="Thang 10" value={profile.scores.gpa || ''} onChange={e => updateScore('gpa', e.target.value)} style={inputStyle} /></div>
               </div>
             </div>
+
+            {showTranscript ? (
+              <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark)', margin: 0 }}>Điểm Học Bạ (Lớp 12 / TB 3 năm)</h3>
+                  <button className="btn-outline" onClick={() => setShowTranscript(false)} style={{ padding: '4px 12px', fontSize: '0.85rem' }}>Đóng lại</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px' }}>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Toán</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.toan || ''} onChange={e => updateTranscriptScore('toan', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Ngữ Văn</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.van || ''} onChange={e => updateTranscriptScore('van', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Ngoại Ngữ</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.anh || ''} onChange={e => updateTranscriptScore('anh', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Vật Lý</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.ly || ''} onChange={e => updateTranscriptScore('ly', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Hóa Học</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.hoa || ''} onChange={e => updateTranscriptScore('hoa', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Sinh Học</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.sinh || ''} onChange={e => updateTranscriptScore('sinh', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Lịch Sử</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.su || ''} onChange={e => updateTranscriptScore('su', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Địa Lý</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.dia || ''} onChange={e => updateTranscriptScore('dia', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>GDCD</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.gdcd || ''} onChange={e => updateTranscriptScore('gdcd', e.target.value)} style={inputStyle} /></div>
+                  <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Điểm TB chung</label><input type="number" step="0.1" max="10" value={profile.transcriptScores?.gpa || ''} onChange={e => updateTranscriptScore('gpa', e.target.value)} style={inputStyle} /></div>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowTranscript(true)}
+                style={{ 
+                  background: 'none', border: '1px dashed var(--primary-blue)', 
+                  color: 'var(--primary-blue)', padding: '16px', borderRadius: '8px',
+                  fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                  width: '100%', textAlign: 'center'
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = 'var(--light-blue)'; e.currentTarget.style.borderStyle = 'solid'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderStyle = 'dashed'; }}
+              >
+                + Thêm điểm Xét Học Bạ (Tùy chọn)
+              </button>
+            )}
           </div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>2. Tham số cá nhân</h2>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>3. Tham số cá nhân</h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <label style={{ color: 'var(--text-dark)', fontWeight: 600 }}>
@@ -198,21 +245,14 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>3. Trắc nghiệm tính cách (RIASEC)</h2>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>2. Trắc nghiệm tính cách (RIASEC)</h2>
             
             {!skipTest ? (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-10px' }}>
+                <div style={{ marginBottom: '-10px' }}>
                   <p style={{ color: 'var(--text-muted)' }}>Đánh dấu vào những hoạt động bạn cảm thấy hứng thú nhất:</p>
-                  <button 
-                    onClick={() => setSkipTest(true)}
-                    className="btn-outline"
-                    style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary-blue)', borderColor: 'var(--primary-blue)' }}
-                  >
-                    Bỏ qua Trắc nghiệm & Chọn thẳng Ngành/Tổ hợp &rarr;
-                  </button>
                 </div>
                 
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -382,6 +422,19 @@ export default function ProfilePage() {
             >
               Quay lại
             </button>
+
+            {step === 2 && !skipTest && (
+              <button 
+                onClick={() => setSkipTest(true)}
+                style={{ 
+                  padding: '8px 16px', fontSize: '0.95rem', fontWeight: 600, 
+                  color: 'var(--primary-blue)', background: 'transparent', 
+                  border: 'none', cursor: 'pointer', textDecoration: 'underline'
+                }}
+              >
+                Chọn ngành/tổ hợp &rarr;
+              </button>
+            )}
             <button 
               onClick={step === 3 ? handleComplete : handleNext} 
               className="btn-primary"

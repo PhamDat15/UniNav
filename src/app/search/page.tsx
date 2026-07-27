@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { mockUniversities } from '../../data/mockUniversities';
 import { calculateMatch, calculateBestMethod, UserProfile, MatchResult } from '../../utils/matchEngine';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Typewriter = ({ text }: { text: string }) => {
   const [displayed, setDisplayed] = useState('');
@@ -22,9 +23,12 @@ const Typewriter = ({ text }: { text: string }) => {
 
 export default function SearchPage() {
   const router = useRouter();
+  const { user, isLoggedIn, updateUserProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [results, setResults] = useState<MatchResult[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterPassChance, setFilterPassChance] = useState('All');
+  const [sortBy, setSortBy] = useState('match_desc');
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [globalBestMethod, setGlobalBestMethod] = useState<{score: number, methodName: string} | null>(null);
   const [activeSubjects, setActiveSubjects] = useState<string[]>([]);
@@ -32,13 +36,19 @@ export default function SearchPage() {
   const [displayCount, setDisplayCount] = useState(10);
 
   useEffect(() => {
-    const saved = localStorage.getItem('userProfile');
-    if (saved) {
-      const p: UserProfile = JSON.parse(saved);
+    let p: UserProfile | null = null;
+    if (isLoggedIn && user?.profile) {
+      p = user.profile;
+    } else {
+      const saved = localStorage.getItem('userProfile');
+      if (saved) p = JSON.parse(saved);
+    }
+
+    if (p) {
       setProfile(p);
       setActiveSubjects(Object.keys(p.scores));
       
-      const best = calculateBestMethod(p.scores);
+      const best = calculateBestMethod(p.scores, p.transcriptScores);
       setGlobalBestMethod(best);
 
       const matched = mockUniversities.map(u => calculateMatch(p, u));
@@ -50,7 +60,7 @@ export default function SearchPage() {
     if (savedWishlist) {
       setWishlist(JSON.parse(savedWishlist));
     }
-  }, []);
+  }, [isLoggedIn, user]);
 
   const toggleWishlist = (id: string) => {
     let newList = [...wishlist];
@@ -58,6 +68,13 @@ export default function SearchPage() {
       newList = newList.filter(i => i !== id);
     } else {
       newList.push(id);
+      const program = mockUniversities.find(u => u.id === id) || massiveUniversities.find(u => u.id === id);
+      if (program) {
+        const newNotif = { id: Date.now(), text: `Bạn đã thêm ngành ${program.name} vào danh sách nguyện vọng.`, time: Date.now() };
+        const existing = JSON.parse(localStorage.getItem('system_notifications') || '[]');
+        localStorage.setItem('system_notifications', JSON.stringify([newNotif, ...existing]));
+        window.dispatchEvent(new Event('notificationsUpdated'));
+      }
     }
     setWishlist(newList);
     localStorage.setItem('wishlist', JSON.stringify(newList));
@@ -67,9 +84,15 @@ export default function SearchPage() {
 
   const handleReAnalyze = () => {
     if (!profile) return;
-    localStorage.setItem('userProfile', JSON.stringify(profile));
     
-    const best = calculateBestMethod(profile.scores);
+    if (isLoggedIn) {
+      updateUserProfile(profile);
+    } else {
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+    }
+
+    
+    const best = calculateBestMethod(profile.scores, profile.transcriptScores);
     setGlobalBestMethod(best);
 
     const matched = mockUniversities.map(u => calculateMatch(profile, u));
@@ -104,10 +127,28 @@ export default function SearchPage() {
     finalResults.sort((a, b) => (b.passProbability + b.suitabilityScore) - (a.passProbability + a.suitabilityScore));
   }
 
-  const filtered = finalResults.filter(r => 
+  let filtered = finalResults.filter(r => 
     r.program.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     r.program.major.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (filterPassChance !== 'All') {
+    filtered = filtered.filter(r => {
+      const p = r.passProbability;
+      if (filterPassChance === 'Cao') return p >= 80;
+      if (filterPassChance === 'Vừa Sức') return p >= 50 && p < 80;
+      if (filterPassChance === 'Thiếu Điểm') return p < 50;
+      return true;
+    });
+  }
+
+  if (sortBy === 'match_desc') {
+    filtered.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
+  } else if (sortBy === 'pass_desc') {
+    filtered.sort((a, b) => b.passProbability - a.passProbability);
+  } else if (sortBy === 'fee_asc') {
+    filtered.sort((a, b) => a.program.feePerYear - b.program.feePerYear);
+  }
 
   return (
     <div className="two-column-layout">
@@ -128,7 +169,7 @@ export default function SearchPage() {
 
 
         <h1 style={{ fontSize: '1.8rem', marginBottom: '16px', color: 'var(--text-dark)', textTransform: 'uppercase', lineHeight: '1.4' }}>
-          DANH SÁCH {isSkipTest ? `CÁC TRƯỜNG ĐÀO TẠO NGÀNH ${profile.targetMajor?.toUpperCase()}` : 'CÁC NGÀNH PHÙ HỢP PHÙ HỢP'}
+          DANH SÁCH {isSkipTest ? `CÁC TRƯỜNG ĐÀO TẠO NGÀNH ${profile.targetMajor?.toUpperCase()}` : 'CÁC NGÀNH PHÙ HỢP'}
         </h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
           {isSkipTest 
@@ -137,36 +178,63 @@ export default function SearchPage() {
           }
         </p>
 
-        {/* Khối xanh tìm kiếm */}
-        <div className="blue-box">
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', color: 'var(--text-dark)' }}>
-            Em hãy chọn trường hoặc ngành quan tâm
-          </label>
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm trường hoặc ngành học..."
-            value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setDisplayCount(10); }}
-            style={{ 
-              width: '100%', padding: '12px 16px', borderRadius: '6px', 
-              border: '1px solid var(--border-light)',
-              fontFamily: 'var(--font-sans)', fontSize: '1rem',
-              boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
-            }}
-          />
+        {/* Thanh công cụ lọc */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap', background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm trường/ngành..."
+              value={searchTerm}
+              onChange={e => { setSearchTerm(e.target.value); setDisplayCount(10); }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '0.95rem' }}
+            />
+          </div>
+          
+          <div style={{ flex: '0 0 auto' }}>
+            <select 
+              value={filterPassChance} 
+              onChange={e => { setFilterPassChance(e.target.value); setDisplayCount(10); }}
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '0.95rem', background: 'white', cursor: 'pointer' }}
+            >
+              <option value="All">Tất cả Khả năng đỗ</option>
+              <option value="Cao">Rất Cao (≥ 80%)</option>
+              <option value="Vừa Sức">Vừa Sức (50% - 79%)</option>
+              <option value="Thiếu Điểm">Cần Cố Gắng (&lt; 50%)</option>
+            </select>
+          </div>
+
+          <div style={{ flex: '0 0 auto' }}>
+            <select 
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value)}
+              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '0.95rem', background: 'white', cursor: 'pointer' }}
+            >
+              <option value="match_desc">Sắp xếp: Phù hợp nhất</option>
+              <option value="pass_desc">Sắp xếp: Dễ đỗ nhất</option>
+              <option value="fee_asc">Sắp xếp: Học phí thấp nhất</option>
+            </select>
+          </div>
+
+          <button 
+            onClick={() => router.push('/wishlist')}
+            className="btn-primary"
+            style={{ flex: '0 0 auto', padding: '10px 20px', background: 'var(--primary-purple)' }}
+          >
+            So sánh chi tiết &rarr;
+          </button>
         </div>
 
         {/* Bảng Dữ Liệu */}
         <div className="data-table-container">
           <table className="data-table">
-            <thead style={{ position: 'sticky', top: '79px', zIndex: 20 }}>
+            <thead style={{ position: 'sticky', top: '63px', zIndex: 20 }}>
               <tr>
-                <th style={{ width: '50px', position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>STT</th>
-                <th style={{ position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>Tên Trường & Ngành</th>
-                <th style={{ position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>Khả Năng Đỗ</th>
-                <th className="blue-th" style={{ position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>Độ Phù Hợp</th>
-                <th style={{ position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>Ghi Chú</th>
-                <th style={{ position: 'sticky', top: '79px', zIndex: 20, textAlign: 'center' }}>So Sánh</th>
+                <th style={{ width: '50px', position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>STT</th>
+                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Tên Trường & Ngành</th>
+                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Khả Năng Đỗ</th>
+                <th className="blue-th" style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Độ Phù Hợp</th>
+                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Ghi Chú</th>
+                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>So Sánh</th>
               </tr>
             </thead>
             <tbody>
@@ -245,7 +313,7 @@ export default function SearchPage() {
       </div>
 
       {/* Cột Phải (Sidebar) */}
-      <div className="sidebar" style={{ position: 'sticky', top: '88px', height: 'fit-content', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
+      <div className="sidebar" style={{ position: 'sticky', top: '72px', height: 'fit-content', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
         <div style={{ padding: '16px', background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           <div style={{ marginBottom: '16px' }}>
             <h3 style={{ fontSize: '1.2rem', color: 'var(--text-dark)', marginBottom: '4px' }}>Điểm tinh chỉnh</h3>

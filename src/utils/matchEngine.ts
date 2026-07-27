@@ -18,6 +18,7 @@ export interface ExamScores {
 
 export interface UserProfile {
   scores: ExamScores;
+  transcriptScores?: ExamScores;
   maxFee: number;
   location: string;
   traits: string[];
@@ -38,7 +39,7 @@ export interface MatchResult {
   bestMethod: BestMethod;
 }
 
-export function evaluateUniversityMethods(scores: ExamScores, program: UniversityProgram): BestMethod {
+export function evaluateUniversityMethods(scores: ExamScores, program: UniversityProgram, transcriptScores?: ExamScores): BestMethod {
   let best: BestMethod = { score: 0, methodName: 'Chưa đủ dữ liệu điểm' };
 
   const updateIfBetter = (score: number, name: string) => {
@@ -106,25 +107,26 @@ export function evaluateUniversityMethods(scores: ExamScores, program: Universit
     updateIfBetter(tsaConverted, `TSA (${scores.tsa}/100)`);
   }
 
-  if (scores.gpa && program.talentAdmission && program.talentAdmission.toLowerCase().includes('học bạ')) {
-    const gpaConverted = scores.gpa * 3;
-    updateIfBetter(gpaConverted, `Học bạ (GPA ${scores.gpa})`);
+  const gpaScore = transcriptScores?.gpa || scores.gpa;
+  if (gpaScore && program.talentAdmission && program.talentAdmission.toLowerCase().includes('học bạ')) {
+    const gpaConverted = gpaScore * 3;
+    updateIfBetter(gpaConverted, `Học bạ (GPA ${gpaScore})`);
   }
 
   return best;
 }
 
-export function calculateBestMethod(scores: ExamScores): BestMethod {
+export function calculateBestMethod(scores: ExamScores, transcriptScores?: ExamScores): BestMethod {
   // Hàm này giờ chỉ trả về một điểm giả lập nếu cần fallback (có thể giữ lại để UI không bị crash, 
   // nhưng logic chính giờ ở evaluateUniversityMethods)
-  return evaluateUniversityMethods(scores, { subjectBlocks: ['A00','A01','B00','C00','D01','D07'], specialExams: ['HSA','TSA'], talentAdmission: 'học bạ' } as UniversityProgram);
+  return evaluateUniversityMethods(scores, { subjectBlocks: ['A00','A01','B00','C00','D01','D07'], specialExams: ['HSA','TSA'], talentAdmission: 'học bạ' } as UniversityProgram, transcriptScores);
 }
 
 export function calculateMatch(profile: UserProfile, program: UniversityProgram): MatchResult {
   let suitabilityScore = 50;
   let reasoning = [];
   
-  const bestMethod = evaluateUniversityMethods(profile.scores, program);
+  const bestMethod = evaluateUniversityMethods(profile.scores, program, profile.transcriptScores);
 
   const diff = bestMethod.score - program.averageScore;
   let passProb = 0;

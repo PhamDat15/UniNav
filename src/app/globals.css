@@ -24,7 +24,8 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-page);
+  background-color: #e2e8f0; /* Màu xám đậm hơn chút */
+  background-attachment: fixed;
   color: var(--text-dark);
   min-height: 100vh;
 }

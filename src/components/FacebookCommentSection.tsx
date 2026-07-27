@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 // Types
 export type CommentData = {
@@ -282,6 +283,7 @@ export default function FacebookCommentSection() {
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
+  const { isLoggedIn, user, setShowLoginModal } = useAuth();
 
   const handleLike = (targetId: string) => {
     // Recursive function to toggle like
@@ -310,11 +312,12 @@ export default function FacebookCommentSection() {
 
     const newCmt: CommentData = {
       id: Math.random().toString(),
-      author: 'Bạn (Người dùng hiện tại)',
-      avatarUrl: 'https://i.pravatar.cc/150?u=you',
+      author: user ? user.displayName : 'Người dùng',
+      avatarUrl: user ? user.avatar : 'https://i.pravatar.cc/150?u=you',
       timeAgo: 'Vừa xong',
       content: newComment,
       likesCount: 0,
+      isAuthor: true,
     };
 
     if (replyingTo) {
@@ -346,48 +349,74 @@ export default function FacebookCommentSection() {
       
       {/* Input Area */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        <img src="https://i.pravatar.cc/150?u=you" alt="You" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+        {isLoggedIn && user ? (
+          <img src={user.avatar} alt="You" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=C+C&background=6366f1&color=fff' }} />
+        ) : (
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#e4e6eb', flexShrink: 0 }} />
+        )}
         <div style={{ flex: 1 }}>
-          {replyingTo && (
-            <div style={{ fontSize: '0.85rem', color: '#65676b', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              Đang trả lời <strong>{replyingTo.name}</strong>
-              <span style={{ cursor: 'pointer', color: '#1877f2' }} onClick={() => setReplyingTo(null)}>Hủy</span>
-            </div>
+          {isLoggedIn ? (
+            <>
+              {replyingTo && (
+                <div style={{ fontSize: '0.85rem', color: '#65676b', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Đang trả lời <strong>{replyingTo.name}</strong>
+                  <span style={{ cursor: 'pointer', color: '#1877f2' }} onClick={() => setReplyingTo(null)}>Hủy</span>
+                </div>
+              )}
+              <div style={{ position: 'relative' }}>
+                <textarea
+                  placeholder="Viết bình luận công khai..."
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  style={{ 
+                    width: '100%', 
+                    backgroundColor: '#f0f2f5', 
+                    border: 'none', 
+                    borderRadius: '20px', 
+                    padding: '10px 48px 10px 16px', 
+                    fontSize: '0.95rem',
+                    color: '#050505',
+                    outline: 'none',
+                    resize: 'none',
+                    minHeight: '40px',
+                    lineHeight: '1.4'
+                  }}
+                  rows={newComment.split('\n').length > 1 ? newComment.split('\n').length : 1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handlePost();
+                    }
+                  }}
+                />
+                <div 
+                  style={{ position: 'absolute', right: '12px', top: '10px', cursor: 'pointer', color: '#1877f2' }}
+                  onClick={handlePost}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#65676b', marginTop: '4px', marginLeft: '12px' }}>Nhấn Enter để đăng.</div>
+            </>
+          ) : (
+             <div 
+               style={{ 
+                 width: '100%', 
+                 backgroundColor: '#f0f2f5', 
+                 borderRadius: '20px', 
+                 padding: '10px 16px', 
+                 fontSize: '0.95rem',
+                 color: '#65676b',
+                 display: 'flex',
+                 justifyContent: 'space-between',
+                 alignItems: 'center',
+                 minHeight: '40px'
+               }}
+             >
+               <span>Vui lòng đăng nhập để bình luận</span>
+               <button onClick={() => setShowLoginModal(true)} style={{ background: 'transparent', border: 'none', color: '#1877f2', fontWeight: 600, cursor: 'pointer', padding: 0 }}>Đăng nhập</button>
+             </div>
           )}
-          <div style={{ position: 'relative' }}>
-            <textarea
-              placeholder="Viết bình luận công khai..."
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              style={{ 
-                width: '100%', 
-                backgroundColor: '#f0f2f5', 
-                border: 'none', 
-                borderRadius: '20px', 
-                padding: '10px 48px 10px 16px', 
-                fontSize: '0.95rem',
-                color: '#050505',
-                outline: 'none',
-                resize: 'none',
-                minHeight: '40px',
-                lineHeight: '1.4'
-              }}
-              rows={newComment.split('\n').length > 1 ? newComment.split('\n').length : 1}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handlePost();
-                }
-              }}
-            />
-            <div 
-              style={{ position: 'absolute', right: '12px', top: '10px', cursor: 'pointer', color: '#1877f2' }}
-              onClick={handlePost}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-            </div>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#65676b', marginTop: '4px', marginLeft: '12px' }}>Nhấn Enter để đăng.</div>
         </div>
       </div>
 
