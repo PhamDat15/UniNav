@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { mockUniversities } from '../../data/mockUniversities';
+import { massiveUniversities } from '../../data/massiveUniversities';
 import { calculateMatch, calculateBestMethod, UserProfile, MatchResult } from '../../utils/matchEngine';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
