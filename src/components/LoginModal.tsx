@@ -139,7 +139,7 @@ export default function LoginModal() {
         
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
           Tài khoản demo: <br/> 
-          <b>a</b> / <b>a</b> (User cũ) - <b>b</b> / <b>b</b> (User mới)
+          <b>a</b> / <b>a</b> (Tài khoản đã có) - <b>b</b> / <b>b</b> (Tài khoản để thanh toán)
         </div>
       </div>
     </div>

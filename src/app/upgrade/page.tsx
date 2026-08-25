@@ -100,31 +100,42 @@ export default function UpgradePage() {
             99.000đ<span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 500 }}>/vĩnh viễn</span>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', width: '100%', textAlign: 'center', marginBottom: '24px', border: '1px dashed var(--border-light)' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '12px' }}>📱</div>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark)', marginBottom: '8px' }}>Thanh toán qua Ví điện tử / Ngân hàng</h3>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Mã QR sẽ hiển thị trên ứng dụng thực tế.</p>
-          </div>
+          {!user ? (
+            <>
+              <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '12px', width: '100%', textAlign: 'center', marginBottom: '24px', border: '1px dashed var(--border-light)' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '12px' }}>📱</div>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark)', marginBottom: '8px' }}>Yêu cầu Đăng nhập</h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Vui lòng đăng nhập để tiến hành thanh toán và lưu dữ liệu của bạn.</p>
+              </div>
 
-          <button 
-            onClick={handlePayment}
-            disabled={isProcessing}
-            className="btn-primary"
-            style={{ 
-              width: '100%', 
-              padding: '16px', 
-              fontSize: '1.1rem', 
-              fontWeight: 700,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '8px',
-              opacity: isProcessing ? 0.7 : 1,
-              cursor: isProcessing ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {isProcessing ? 'Đang xử lý...' : (!user ? 'Đăng nhập để Nâng cấp' : 'Giả lập Thanh toán Thành công')}
-          </button>
+              <button 
+                onClick={handlePayment}
+                disabled={isProcessing}
+                className="btn-primary"
+                style={{ width: '100%', padding: '16px', fontSize: '1.1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+              >
+                Đăng nhập để Nâng cấp
+              </button>
+            </>
+          ) : (
+            <>
+              <div 
+                style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', width: '100%', textAlign: 'center', marginBottom: '24px', border: '1px solid var(--border-light)', cursor: isProcessing ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }} 
+                onClick={isProcessing ? undefined : handlePayment}
+                className="hoverable-row"
+              >
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-dark)', marginBottom: '8px' }}>Quét mã để Thanh toán</h3>
+                <img 
+                  src="https://img.vietqr.io/image/970415-113366668888-compact2.png?amount=99000&addInfo=Thanh%20toan%20VIP%20UniNav&accountName=UniNav" 
+                  alt="Mã QR Thanh toán" 
+                  style={{ width: '100%', maxWidth: '250px', height: 'auto', borderRadius: '8px', opacity: isProcessing ? 0.5 : 1, transition: 'opacity 0.2s' }} 
+                />
+                <p style={{ fontSize: '0.9rem', color: 'var(--primary-blue)', marginTop: '16px', fontWeight: 600 }}>
+                  {isProcessing ? 'Đang xử lý thanh toán...' : '👉 CLICK trực tiếp vào mã QR để thanh toán 👈'}
+                </p>
+              </div>
+            </>
+          )}
           
           <button 
             onClick={() => router.back()}
