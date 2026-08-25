@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { UserProfile, ExamScores } from '../../utils/matchEngine';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, isLoggedIn, updateUserProfile } = useAuth();
+  
   const [step, setStep] = useState(1);
-  const [skipTest, setSkipTest] = useState(false);
+  const [showRiasec, setShowRiasec] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   
   const [profile, setProfile] = useState<UserProfile>({
     scores: {},
@@ -17,6 +22,34 @@ export default function ProfilePage() {
     location: 'Hà Nội',
     traits: []
   });
+
+  useEffect(() => {
+    const stepParam = searchParams.get('step');
+    if (stepParam) {
+      setStep(parseInt(stepParam, 10));
+    }
+
+    if (isLoggedIn && user?.profile) {
+      setProfile(prev => ({
+        ...prev,
+        ...user.profile,
+        scores: user.profile?.scores || {},
+        transcriptScores: user.profile?.transcriptScores || {},
+        awards: user.profile?.awards || {}
+      }));
+      if (user.profile.traits && user.profile.traits.length > 0) {
+        setSelectedTraits(user.profile.traits);
+        setShowRiasec(true);
+      }
+    } else {
+      const saved = localStorage.getItem('userProfile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setProfile(parsed);
+        if (parsed.traits) setSelectedTraits(parsed.traits);
+      }
+    }
+  }, [searchParams, isLoggedIn, user]);
 
   const updateScore = (field: keyof ExamScores, value: string) => {
     const num = parseFloat(value);
@@ -40,6 +73,16 @@ export default function ProfilePage() {
     });
   };
 
+  const updateAward = (field: 'nationalPrize' | 'provincialPrize', value: string) => {
+    setProfile({
+      ...profile,
+      awards: {
+        ...(profile.awards || {}),
+        [field]: value === '' ? undefined : value
+      }
+    });
+  };
+
   const riasecOptions = [
     { code: 'R', name: 'Realistic (Thực tế)' },
     { code: 'I', name: 'Investigative (Nghiên cứu)' },
@@ -48,17 +91,33 @@ export default function ProfilePage() {
     { code: 'E', name: 'Enterprising (Khởi nghiệp)' },
     { code: 'C', name: 'Conventional (Mẫu mực)' },
   ];
-  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
 
   const toggleTrait = (code: string) => {
-    if (selectedTraits.includes(code)) {
-      setSelectedTraits(selectedTraits.filter(t => t !== code));
+    let newTraits = [...selectedTraits];
+    if (newTraits.includes(code)) {
+      newTraits = newTraits.filter(t => t !== code);
     } else {
-      if (selectedTraits.length < 2) {
-        setSelectedTraits([...selectedTraits, code]);
+      if (newTraits.length < 2) {
+        newTraits.push(code);
       } else {
         alert("Bạn chỉ được chọn tối đa 2 nhóm tính cách nổi trội nhất.");
+        return;
       }
+    }
+    setSelectedTraits(newTraits);
+    
+    // Đề xuất ngành tự động
+    if (newTraits.length > 0) {
+      const primary = newTraits[0];
+      let suggestedMajor = '';
+      if (primary === 'R') suggestedMajor = 'Kỹ thuật';
+      else if (primary === 'I') suggestedMajor = 'Công nghệ thông tin';
+      else if (primary === 'A') suggestedMajor = 'Thiết kế đồ họa';
+      else if (primary === 'S') suggestedMajor = 'Ngôn ngữ';
+      else if (primary === 'E') suggestedMajor = 'Kinh tế';
+      else if (primary === 'C') suggestedMajor = 'Kinh tế';
+      
+      setProfile(prev => ({...prev, targetMajor: suggestedMajor}));
     }
   };
 
@@ -66,20 +125,17 @@ export default function ProfilePage() {
   const handlePrev = () => setStep(s => s - 1);
   
   const handleComplete = () => {
-    if (!skipTest) {
-      if (selectedTraits.length === 0) {
-        alert("Vui lòng chọn ít nhất 1 nhóm tính cách hoặc chọn Bỏ qua.");
-        return;
-      }
-      localStorage.setItem('userProfile', JSON.stringify({ ...profile, traits: selectedTraits }));
-    } else {
-      if ((!profile.targetMajor || profile.targetMajor === '') && (!profile.targetBlock || profile.targetBlock === '')) {
-        alert("Vui lòng chọn ít nhất Ngành học mong muốn hoặc Tổ hợp môn ưu tiên!");
-        return;
-      }
-      localStorage.setItem('userProfile', JSON.stringify({ ...profile, traits: [] }));
+    const finalProfile = { ...profile, traits: selectedTraits };
+    localStorage.setItem('userProfile', JSON.stringify(finalProfile));
+    
+    if (isLoggedIn && user) {
+      updateUserProfile({
+        ...(user.profile || {}),
+        ...finalProfile
+      });
     }
-    setStep(4);
+    
+    router.push('/search');
   };
 
   const inputStyle = { 
@@ -93,10 +149,10 @@ export default function ProfilePage() {
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px 0' }}>
       <div style={{ marginBottom: '32px', textAlign: 'center' }}>
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Xây Dựng Hồ Sơ</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Bước {step > 3 ? 3 : step} / 3</p>
+        <p style={{ color: 'var(--text-muted)' }}>Bước {step > 2 ? 2 : step} / 2</p>
         
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
-          {[1, 2, 3].map(i => (
+          {[1, 2].map(i => (
             <div key={i} style={{ 
               height: '4px', 
               width: '40px', 
@@ -140,6 +196,32 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            <div style={{ background: '#fef3c7', padding: '16px', borderRadius: '8px', border: '1px solid #fde68a' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: '#b45309' }}>Thành tích Giải thưởng (Tùy chọn)</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Giải HSG Quốc gia</label>
+                  <select value={profile.awards?.nationalPrize || ''} onChange={e => updateAward('nationalPrize', e.target.value)} style={inputStyle}>
+                    <option value="">-- Không có --</option>
+                    <option value="Nhất">Giải Nhất</option>
+                    <option value="Nhì">Giải Nhì</option>
+                    <option value="Ba">Giải Ba</option>
+                    <option value="Khuyến khích">Giải Khuyến khích</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Giải HSG Cấp Tỉnh/TP</label>
+                  <select value={profile.awards?.provincialPrize || ''} onChange={e => updateAward('provincialPrize', e.target.value)} style={inputStyle}>
+                    <option value="">-- Không có --</option>
+                    <option value="Nhất">Giải Nhất</option>
+                    <option value="Nhì">Giải Nhì</option>
+                    <option value="Ba">Giải Ba</option>
+                    <option value="Khuyến khích">Giải Khuyến khích</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {showTranscript ? (
               <div style={{ background: 'var(--bg-page)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -177,9 +259,9 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>3. Tham số cá nhân</h2>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>2. Tham số cá nhân</h2>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <label style={{ color: 'var(--text-dark)', fontWeight: 600 }}>
@@ -231,6 +313,23 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Ngành học quan tâm</label>
+              <select 
+                value={profile.targetMajor || ''}
+                onChange={e => setProfile({...profile, targetMajor: e.target.value})}
+                style={inputStyle}
+              >
+                <option value="">-- Chưa xác định --</option>
+                <option value="Công nghệ thông tin">Công nghệ thông tin (IT, KHMT...)</option>
+                <option value="Kinh tế">Khối Kinh tế (QTKD, Kế toán...)</option>
+                <option value="Kỹ thuật">Khối Kỹ thuật (Cơ điện tử, Tự động hóa...)</option>
+                <option value="Ngôn ngữ">Ngôn ngữ học (Anh, Trung, Nhật...)</option>
+                <option value="Thiết kế đồ họa">Nghệ thuật / Thiết kế đồ họa</option>
+                <option value="Y Dược">Y Dược</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <label style={{ color: 'var(--text-dark)', fontWeight: 600 }}>Khu vực ưu tiên</label>
               <select 
                 value={profile.location}
@@ -242,38 +341,48 @@ export default function ProfilePage() {
                 <option value="Khác">Khu vực khác</option>
               </select>
             </div>
-          </div>
-        )}
 
-        {step === 2 && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary-blue)' }}>2. Trắc nghiệm tính cách (RIASEC)</h2>
-            
-            {!skipTest ? (
-              <>
-                <div style={{ marginBottom: '-10px' }}>
-                  <p style={{ color: 'var(--text-muted)' }}>Đánh dấu vào những hoạt động bạn cảm thấy hứng thú nhất:</p>
+            {/* Trắc nghiệm tính cách (Tùy chọn) */}
+            {!showRiasec ? (
+              <button 
+                onClick={() => setShowRiasec(true)}
+                style={{ 
+                  background: 'none', border: '1px dashed var(--primary-purple)', 
+                  color: 'var(--primary-purple)', padding: '16px', borderRadius: '8px',
+                  fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                  width: '100%', textAlign: 'center', marginTop: '16px'
+                }}
+                onMouseOver={e => { e.currentTarget.style.background = '#f3e8ff'; e.currentTarget.style.borderStyle = 'solid'; }}
+                onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderStyle = 'dashed'; }}
+              >
+                Chưa biết chọn ngành nào? Hãy làm Trắc nghiệm tính cách (RIASEC) để nhận đề xuất
+              </button>
+            ) : (
+              <div style={{ background: 'var(--bg-page)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', marginTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '1.3rem', color: 'var(--primary-purple)', margin: 0 }}>Trắc nghiệm tính cách (RIASEC)</h3>
+                  <button className="btn-outline" onClick={() => setShowRiasec(false)} style={{ padding: '4px 12px', fontSize: '0.85rem' }}>Đóng lại</button>
                 </div>
                 
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <a href="https://openpsychometrics.org/tests/RIASEC/" target="_blank" rel="noopener noreferrer">
-                      <button className="btn-primary" style={{ padding: '12px 24px', fontSize: '1rem', background: 'var(--primary-purple)', boxShadow: 'var(--shadow-md)' }}>
-                        Mở Bài Test RIASEC (Chuẩn Quốc Tế)
+                      <button className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.95rem', background: 'var(--primary-purple)', boxShadow: 'var(--shadow-md)' }}>
+                        Làm Bài Test Quốc Tế
                       </button>
                     </a>
                     <a href="https://www.google.com/search?q=tr%E1%BA%AFc+nghi%E1%BB%87m+t%C3%ADnh+c%C3%A1ch+Holland+RIASEC+online" target="_blank" rel="noopener noreferrer">
-                      <button className="btn-outline" style={{ padding: '12px 24px', fontSize: '1rem' }}>
+                      <button className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.95rem' }}>
                         Tìm bài Test Tiếng Việt &rarr;
                       </button>
                     </a>
                   </div>
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '16px' }}>
-                    Hãy làm bài test ở trang web bạn tin cậy, sau đó quay lại đây và nhập kết quả (chọn 1-2 mã nổi trội nhất).
+                    Nhập kết quả bài test vào bên dưới (chọn tối đa 2 mã nổi trội nhất).
                   </p>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
                   {riasecOptions.map((opt) => {
                     const isSelected = selectedTraits.includes(opt.code);
                     return (
@@ -281,132 +390,37 @@ export default function ProfilePage() {
                         key={opt.code} 
                         onClick={() => toggleTrait(opt.code)}
                         style={{ 
-                          padding: '20px 16px', background: isSelected ? 'var(--light-blue)' : 'var(--bg-page)', 
+                          padding: '16px 12px', background: isSelected ? 'var(--light-blue)' : '#fff', 
                           border: isSelected ? '2px solid var(--primary-blue)' : '1px solid var(--border-light)',
                           borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s ease',
-                          textAlign: 'center', fontWeight: isSelected ? 700 : 500
+                          textAlign: 'center'
                         }}
                       >
-                        <div style={{ fontSize: '1.8rem', color: isSelected ? 'var(--primary-blue)' : 'var(--text-muted)', marginBottom: '8px', fontWeight: 800 }}>{opt.code}</div>
-                        <div style={{ color: 'var(--text-dark)', fontSize: '0.95rem' }}>{opt.name}</div>
+                        <div style={{ fontSize: '1.5rem', color: isSelected ? 'var(--primary-blue)' : 'var(--text-muted)', marginBottom: '4px', fontWeight: 800 }}>{opt.code}</div>
+                        <div style={{ color: 'var(--text-dark)', fontSize: '0.85rem', fontWeight: isSelected ? 700 : 500 }}>{opt.name}</div>
                       </div>
                     );
                   })}
-                </div>
-              </>
-            ) : (
-              <div style={{ padding: '24px', background: 'var(--bg-page)', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-                <h3 style={{ fontSize: '1.3rem', marginBottom: '8px', color: 'var(--text-dark)' }}>Chọn thẳng Ngành học & Tổ hợp Môn</h3>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '24px', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                  Hệ thống AI sẽ bỏ qua đánh giá tính cách và tinh lọc ra chính xác danh sách trường/chương trình đáp ứng Ngành học và Khối môn xét tuyển bạn mong muốn dưới đây:
-                </p>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>1. Ngành học mong muốn</label>
-                    <select 
-                      value={profile.targetMajor || ''}
-                      onChange={(e) => setProfile({...profile, targetMajor: e.target.value})}
-                      style={inputStyle}
-                    >
-                      <option value="">-- Chọn ngành học --</option>
-                      <option value="All" style={{ fontWeight: 600, color: 'var(--primary-blue)' }}>★ Tất cả các ngành học</option>
-                      <optgroup label="Công nghệ & Kỹ thuật">
-                        <option value="Công nghệ thông tin">Công nghệ thông tin</option>
-                        <option value="Khoa học máy tính">Khoa học máy tính</option>
-                        <option value="Kỹ thuật phần mềm">Kỹ thuật phần mềm</option>
-                        <option value="An toàn thông tin">An toàn thông tin</option>
-                        <option value="Kỹ thuật Ô tô">Kỹ thuật Ô tô</option>
-                        <option value="Kỹ thuật Điều khiển và Tự động hóa">Kỹ thuật Điều khiển và Tự động hóa</option>
-                        <option value="Cơ điện tử">Cơ điện tử</option>
-                      </optgroup>
-                      <optgroup label="Kinh tế & Kinh doanh">
-                        <option value="Kinh tế">Kinh tế</option>
-                        <option value="Quản trị kinh doanh">Quản trị kinh doanh</option>
-                        <option value="Tài chính - Ngân hàng">Tài chính - Ngân hàng</option>
-                        <option value="Kế toán">Kế toán</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Logistics và Quản lý chuỗi cung ứng">Logistics và Quản lý chuỗi cung ứng</option>
-                      </optgroup>
-                      <optgroup label="Khoa học Xã hội & Ngôn ngữ">
-                        <option value="Ngôn ngữ Anh">Ngôn ngữ Anh</option>
-                        <option value="Ngôn ngữ Trung Quốc">Ngôn ngữ Trung Quốc</option>
-                        <option value="Báo chí">Báo chí</option>
-                        <option value="Truyền thông đa phương tiện">Truyền thông đa phương tiện</option>
-                        <option value="Quan hệ công chúng">Quan hệ công chúng</option>
-                        <option value="Sư phạm Tiếng Anh">Sư phạm Tiếng Anh</option>
-                        <option value="Luật">Luật</option>
-                      </optgroup>
-                      <optgroup label="Y Dược">
-                        <option value="Y khoa">Y khoa</option>
-                        <option value="Răng - Hàm - Mặt">Răng - Hàm - Mặt</option>
-                        <option value="Dược học">Dược học</option>
-                        <option value="Điều dưỡng">Điều dưỡng</option>
-                      </optgroup>
-                      <optgroup label="Nghệ thuật & Dịch vụ">
-                        <option value="Thiết kế đồ họa">Thiết kế đồ họa</option>
-                        <option value="Thiết kế thời trang">Thiết kế thời trang</option>
-                        <option value="Quản trị khách sạn">Quản trị khách sạn</option>
-                        <option value="Du lịch và lữ hành">Du lịch và lữ hành</option>
-                        <option value="Diễn viên kịch, điện ảnh">Diễn viên kịch, điện ảnh</option>
-                      </optgroup>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '8px' }}>2. Tổ hợp môn / Phương thức ưu tiên</label>
-                    <select 
-                      value={profile.targetBlock || ''}
-                      onChange={(e) => setProfile({...profile, targetBlock: e.target.value})}
-                      style={inputStyle}
-                    >
-                      <option value="">-- Chọn tổ hợp môn / phương thức --</option>
-                      <option value="All" style={{ fontWeight: 600, color: 'var(--primary-purple)' }}>★ Tất cả các tổ hợp & phương thức</option>
-                      <optgroup label="Khối Thi Môn Tốt Nghiệp">
-                        <option value="A00">Khối A00 (Toán, Lý, Hóa)</option>
-                        <option value="A01">Khối A01 (Toán, Lý, Anh)</option>
-                        <option value="B00">Khối B00 (Toán, Hóa, Sinh)</option>
-                        <option value="C00">Khối C00 (Văn, Sử, Địa)</option>
-                        <option value="D01">Khối D01 (Toán, Văn, Anh)</option>
-                        <option value="D07">Khối D07 (Toán, Hóa, Anh)</option>
-                        <option value="V00">Khối V00 (Toán, Lý, Vẽ/Văn)</option>
-                      </optgroup>
-                      <optgroup label="Đánh giá Năng lực & Xét tuyển Riêng">
-                        <option value="HSA">Đánh giá năng lực ĐHQGHN (HSA)</option>
-                        <option value="TSA">Đánh giá tư duy Bách Khoa (TSA)</option>
-                        <option value="Học bạ">Xét tuyển Học bạ THPT</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: '28px', borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
-                  <button 
-                    onClick={() => { setSkipTest(false); setProfile({...profile, targetMajor: undefined, targetBlock: undefined}); }}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--primary-blue)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem', fontWeight: 500 }}
-                  >
-                    &larr; Quay lại làm trắc nghiệm tính cách
-                  </button>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {step === 4 && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: '5rem', marginBottom: '16px' }}>🎉</div>
-            <h2 style={{ fontSize: '2.5rem' }} className="gradient-text">Hồ sơ đã hoàn tất!</h2>
-            <p style={{ color: 'var(--text-muted)', maxWidth: '400px', fontSize: '1.1rem', lineHeight: '1.6' }}>
-              Hệ thống đã thu thập đủ dữ liệu và sẽ quét toàn bộ các phương án điểm số để tìm lợi thế cao nhất cho bạn.
-            </p>
+        {step === 3 ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a', fontSize: '32px' }}>
+              ✓
+            </div>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--text-dark)' }}>Hồ sơ đã hoàn tất!</h2>
+            <p style={{ color: 'var(--text-muted)' }}>Hệ thống đã ghi nhận điểm số và tiêu chí của bạn.</p>
             <button className="btn-primary" onClick={() => router.push('/search')} style={{ marginTop: '24px', padding: '16px 40px', fontSize: '1.2rem' }}>
               Bắt đầu Phân tích
             </button>
           </div>
-        )}
+        ) : null}
 
-        {step < 4 && (
+        {step < 3 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '32px' }}>
             <button 
               onClick={handlePrev} 
@@ -423,23 +437,11 @@ export default function ProfilePage() {
               Quay lại
             </button>
 
-            {step === 2 && !skipTest && (
-              <button 
-                onClick={() => setSkipTest(true)}
-                style={{ 
-                  padding: '8px 16px', fontSize: '0.95rem', fontWeight: 600, 
-                  color: 'var(--primary-blue)', background: 'transparent', 
-                  border: 'none', cursor: 'pointer', textDecoration: 'underline'
-                }}
-              >
-                Chọn ngành/tổ hợp &rarr;
-              </button>
-            )}
             <button 
-              onClick={step === 3 ? handleComplete : handleNext} 
+              onClick={step === 2 ? handleComplete : handleNext} 
               className="btn-primary"
             >
-              {step === 3 ? 'Hoàn tất' : 'Tiếp tục'}
+              {step === 2 ? 'Hoàn tất & Phân tích' : 'Tiếp tục'}
             </button>
           </div>
         )}

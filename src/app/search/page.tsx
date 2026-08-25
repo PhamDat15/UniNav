@@ -28,13 +28,15 @@ export default function SearchPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [results, setResults] = useState<MatchResult[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterPassChance, setFilterPassChance] = useState('All');
   const [sortBy, setSortBy] = useState('match_desc');
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [globalBestMethod, setGlobalBestMethod] = useState<{score: number, methodName: string} | null>(null);
   const [activeSubjects, setActiveSubjects] = useState<string[]>([]);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<{title: string, reasoning: string} | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<MatchResult | null>(null);
   const [displayCount, setDisplayCount] = useState(10);
+  const [showVipModal, setShowVipModal] = useState(false);
+  const [usedWishlistQuota, setUsedWishlistQuota] = useState<string[]>([]);
+  const [usedAnalysisQuota, setUsedAnalysisQuota] = useState<string[]>([]);
 
   useEffect(() => {
     let p: UserProfile | null = null;
@@ -49,17 +51,31 @@ export default function SearchPage() {
       setProfile(p);
       setActiveSubjects(Object.keys(p.scores));
       
-      const best = calculateBestMethod(p.scores, p.transcriptScores);
+      const best = calculateBestMethod(p);
       setGlobalBestMethod(best);
 
-      const matched = mockUniversities.map(u => calculateMatch(p, u));
+      const allUnis = [...mockUniversities, ...massiveUniversities];
+      let matched = allUnis.map(u => calculateMatch(p, u));
+      
+      if (p.targetMajor && p.targetMajor !== 'All' && p.targetMajor.trim() !== '') {
+        matched = matched.filter(m => m.reasoning.includes('Đúng chuyên ngành mục tiêu'));
+      }
+
       // Sort by suitability or pass probability
       matched.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-      setResults(matched);
+      setResults(matched.slice(0, 30));
     }
     const savedWishlist = localStorage.getItem('wishlist');
     if (savedWishlist) {
       setWishlist(JSON.parse(savedWishlist));
+    }
+    const savedQuota = localStorage.getItem('usedWishlistQuota');
+    if (savedQuota) {
+      setUsedWishlistQuota(JSON.parse(savedQuota));
+    }
+    const savedAnalysisQuota = localStorage.getItem('usedAnalysisQuota');
+    if (savedAnalysisQuota) {
+      setUsedAnalysisQuota(JSON.parse(savedAnalysisQuota));
     }
   }, [isLoggedIn, user]);
 
@@ -68,6 +84,21 @@ export default function SearchPage() {
     if (newList.includes(id)) {
       newList = newList.filter(i => i !== id);
     } else {
+      let newQuota = [...usedWishlistQuota];
+      if (!newQuota.includes(id)) {
+        if (newQuota.length >= 2 && !user?.isVip) {
+          setShowVipModal(true);
+          return;
+        }
+        newQuota.push(id);
+        setUsedWishlistQuota(newQuota);
+        localStorage.setItem('usedWishlistQuota', JSON.stringify(newQuota));
+      }
+
+      if (newList.length >= 15) {
+        alert("Bạn đã đạt giới hạn lưu 15 nguyện vọng!");
+        return;
+      }
       newList.push(id);
       const program = mockUniversities.find(u => u.id === id) || massiveUniversities.find(u => u.id === id);
       if (program) {
@@ -83,6 +114,21 @@ export default function SearchPage() {
     window.dispatchEvent(new Event('wishlistUpdated'));
   };
 
+  const handleAnalyzeClick = (e: React.MouseEvent, res: MatchResult) => {
+    e.stopPropagation();
+    let newQuota = [...usedAnalysisQuota];
+    if (!newQuota.includes(res.program.id)) {
+      if (newQuota.length >= 3 && !user?.isVip) {
+        setShowVipModal(true);
+        return;
+      }
+      newQuota.push(res.program.id);
+      setUsedAnalysisQuota(newQuota);
+      localStorage.setItem('usedAnalysisQuota', JSON.stringify(newQuota));
+    }
+    setSelectedAnalysis(res);
+  };
+
   const handleReAnalyze = () => {
     if (!profile) return;
     
@@ -93,12 +139,18 @@ export default function SearchPage() {
     }
 
     
-    const best = calculateBestMethod(profile.scores, profile.transcriptScores);
+    const best = calculateBestMethod(profile);
     setGlobalBestMethod(best);
 
-    const matched = mockUniversities.map(u => calculateMatch(profile, u));
+    const allUnis = [...mockUniversities, ...massiveUniversities];
+    let matched = allUnis.map(u => calculateMatch(profile, u));
+    
+    if (profile.targetMajor && profile.targetMajor !== 'All' && profile.targetMajor.trim() !== '') {
+      matched = matched.filter(m => m.reasoning.includes('Đúng chuyên ngành mục tiêu'));
+    }
+    
     matched.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-    setResults(matched);
+    setResults(matched.slice(0, 30));
   };
 
   if (!profile) {
@@ -114,9 +166,6 @@ export default function SearchPage() {
   
   let finalResults = [...results];
   if (isSkipTest) {
-    if (profile.targetMajor && profile.targetMajor !== 'All' && profile.targetMajor.trim() !== '') {
-      finalResults = finalResults.filter(r => r.program.major.toLowerCase().includes(profile.targetMajor!.toLowerCase()) || profile.targetMajor!.toLowerCase().includes(r.program.major.toLowerCase()));
-    }
     if (profile.targetBlock && profile.targetBlock !== 'All' && profile.targetBlock.trim() !== '') {
       finalResults = finalResults.filter(r => {
         const bl = profile.targetBlock!;
@@ -128,27 +177,19 @@ export default function SearchPage() {
     finalResults.sort((a, b) => (b.passProbability + b.suitabilityScore) - (a.passProbability + a.suitabilityScore));
   }
 
-  let filtered = finalResults.filter(r => 
-    r.program.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    r.program.major.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  let filtered = finalResults;
 
-  if (filterPassChance !== 'All') {
-    filtered = filtered.filter(r => {
-      const p = r.passProbability;
-      if (filterPassChance === 'Cao') return p >= 80;
-      if (filterPassChance === 'Vừa Sức') return p >= 50 && p < 80;
-      if (filterPassChance === 'Thiếu Điểm') return p < 50;
-      return true;
-    });
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    filtered = filtered.filter(r => r.program.name.toLowerCase().includes(term) || r.program.major.toLowerCase().includes(term));
   }
 
-  if (sortBy === 'match_desc') {
-    filtered.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-  } else if (sortBy === 'pass_desc') {
+  if (sortBy === 'pass_desc') {
     filtered.sort((a, b) => b.passProbability - a.passProbability);
   } else if (sortBy === 'fee_asc') {
     filtered.sort((a, b) => a.program.feePerYear - b.program.feePerYear);
+  } else if (sortBy === 'match_desc') {
+    filtered.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
   }
 
   return (
@@ -175,7 +216,7 @@ export default function SearchPage() {
         <p style={{ color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.6' }}>
           {isSkipTest 
             ? `Dự đoán khả năng đỗ ngành ${profile.targetMajor} của bạn tại các trường đại học với mức điểm ${globalBestMethod?.score}đ.`
-            : `Danh sách các trường đại học và ngành học phù hợp với mức điểm ${globalBestMethod?.score}đ và nhóm tính cách (${profile.traits.join(', ')}) của bạn.`
+            : `Danh sách phân tích tỷ lệ đỗ các trường đại học dựa trên mức điểm ${globalBestMethod?.score}đ của bạn. Đây là các ngành học phù hợp với kiểu tính cách ${profile.traits?.join(', ')} của bạn.`
           }
         </p>
 
@@ -191,18 +232,7 @@ export default function SearchPage() {
             />
           </div>
           
-          <div style={{ flex: '0 0 auto' }}>
-            <select 
-              value={filterPassChance} 
-              onChange={e => { setFilterPassChance(e.target.value); setDisplayCount(10); }}
-              style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '0.95rem', background: 'white', cursor: 'pointer' }}
-            >
-              <option value="All">Tất cả Khả năng đỗ</option>
-              <option value="Cao">Rất Cao (≥ 80%)</option>
-              <option value="Vừa Sức">Vừa Sức (50% - 79%)</option>
-              <option value="Thiếu Điểm">Cần Cố Gắng (&lt; 50%)</option>
-            </select>
-          </div>
+
 
           <div style={{ flex: '0 0 auto' }}>
             <select 
@@ -210,8 +240,7 @@ export default function SearchPage() {
               onChange={e => setSortBy(e.target.value)}
               style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-light)', fontSize: '0.95rem', background: 'white', cursor: 'pointer' }}
             >
-              <option value="match_desc">Sắp xếp: Phù hợp nhất</option>
-              <option value="pass_desc">Sắp xếp: Dễ đỗ nhất</option>
+              <option value="match_desc">Sắp xếp: Độ phù hợp cao nhất</option>
               <option value="fee_asc">Sắp xếp: Học phí thấp nhất</option>
             </select>
           </div>
@@ -221,7 +250,7 @@ export default function SearchPage() {
             className="btn-primary"
             style={{ flex: '0 0 auto', padding: '10px 20px', background: 'var(--primary-purple)' }}
           >
-            So sánh chi tiết &rarr;
+            Xem bảng nguyện vọng &rarr;
           </button>
         </div>
 
@@ -232,10 +261,9 @@ export default function SearchPage() {
               <tr>
                 <th style={{ width: '50px', position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>STT</th>
                 <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Tên Trường & Ngành</th>
-                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Khả Năng Đỗ</th>
-                <th className="blue-th" style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Độ Phù Hợp</th>
+                {!isSkipTest && <th className="blue-th" style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Nhóm Tính Cách</th>}
                 <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Ghi Chú</th>
-                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>So Sánh</th>
+                <th style={{ position: 'sticky', top: '63px', zIndex: 20, textAlign: 'center' }}>Xếp Nguyện Vọng</th>
               </tr>
             </thead>
             <tbody>
@@ -263,19 +291,14 @@ export default function SearchPage() {
                         </div>
                       )}
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span style={{ 
-                        fontWeight: 700, 
-                        color: res.passProbability > 80 ? '#16a34a' : res.passProbability > 50 ? '#d97706' : '#dc2626' 
-                      }}>
-                        {res.passProbability}%
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--primary-purple)' }}>
-                      {res.suitabilityScore}%
-                    </td>
+
+                    {!isSkipTest && (
+                      <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--text-dark)' }}>
+                        {res.program.targetTraits && res.program.targetTraits.length > 0 ? res.program.targetTraits.join(', ') : 'N/A'}
+                      </td>
+                    )}
                     <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '200px' }}>
-                      <button onClick={(e) => { e.stopPropagation(); setSelectedAnalysis({ title: `${res.program.name} - ${res.program.major}`, reasoning: res.reasoning }); }} style={{ background: 'var(--light-blue)', border: '1px solid var(--primary-blue)', color: 'var(--primary-blue)', cursor: 'pointer', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem' }}>Phân tích</button>
+                      <button onClick={(e) => handleAnalyzeClick(e, res)} style={{ background: 'var(--light-blue)', border: '1px solid var(--primary-blue)', color: 'var(--primary-blue)', cursor: 'pointer', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem' }}>Phân tích</button>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button 
@@ -385,32 +408,166 @@ export default function SearchPage() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'rgba(15, 23, 42, 0.7)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 9999,
-          backdropFilter: 'blur(4px)'
+          backdropFilter: 'blur(8px)'
         }}>
           <div style={{
             background: 'var(--bg-card)',
-            padding: '32px',
-            borderRadius: '16px',
+            borderRadius: '24px',
             width: '90%',
-            maxWidth: '500px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-            position: 'relative'
+            maxWidth: '600px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+            position: 'relative',
+            overflow: 'hidden',
+            border: '1px solid var(--border-light)'
           }}>
-            <h3 style={{ marginBottom: '16px', color: 'var(--primary-blue)' }}>Phân tích: {selectedAnalysis.title}</h3>
-            <p style={{ color: 'var(--text-dark)', lineHeight: '1.7', fontSize: '1.05rem', minHeight: '100px' }}>
-              <Typewriter text={selectedAnalysis.reasoning} />
-            </p>
-            <button 
-              onClick={() => setSelectedAnalysis(null)} 
-              style={{ marginTop: '24px', background: 'var(--primary-blue)', color: 'white', border: 'none', padding: '10px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, width: '100%' }}
-            >
-              Đóng
-            </button>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-purple))',
+              padding: '24px 32px',
+              color: 'white'
+            }}>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0, paddingRight: '20px' }}>Phân tích: {selectedAnalysis.program.name}</h3>
+              <p style={{ margin: '4px 0 0', opacity: 0.9 }}>Ngành: {selectedAnalysis.program.major}</p>
+            </div>
+            
+            <div style={{ padding: '32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px dashed var(--border-light)' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, marginBottom: '8px' }}>
+                    Khả năng đỗ (Tỷ lệ đỗ)
+                  </div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: selectedAnalysis.passProbability >= 80 ? '#16a34a' : selectedAnalysis.passProbability >= 50 ? '#d97706' : '#dc2626' }}>
+                    {selectedAnalysis.passProbability}%
+                  </div>
+                </div>
+                
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px dashed var(--border-light)' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, marginBottom: '8px' }}>
+                    Tổ hợp / Phương thức Tối ưu
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary-blue)' }}>
+                    {selectedAnalysis.bestMethod?.methodName || 'Không xác định'}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Điểm quy đổi: <span style={{ fontWeight: 600, color: 'var(--text-dark)' }}>{selectedAnalysis.bestMethod?.score.toFixed(1)} đ</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, marginBottom: '8px' }}>
+                  🧠 Giải nghĩa từ Trí tuệ Nhân tạo
+                </div>
+                <div style={{ color: 'var(--text-dark)', lineHeight: '1.7', fontSize: '1rem', minHeight: '80px', background: '#f0f4f8', padding: '16px', borderRadius: '12px', borderLeft: '4px solid var(--primary-purple)' }}>
+                  <Typewriter text={selectedAnalysis.reasoning} />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600, marginBottom: '8px' }}>
+                  💡 Gợi ý Chiến lược
+                </div>
+                <div style={{ color: 'var(--text-dark)', fontSize: '0.95rem' }}>
+                  {selectedAnalysis.passProbability >= 80 ? 'Tỷ lệ đỗ rất cao! Đây là phương án AN TOÀN tuyệt vời để bạn chống trượt. Nên đặt ở các nguyện vọng cuối.' : 
+                   selectedAnalysis.passProbability >= 50 ? 'Khả năng đỗ ở mức VỪA SỨC. Bạn hoàn toàn có cơ hội trúng tuyển nếu điểm thi giữ vững phong độ. Nên đặt ở nguyện vọng giữa.' :
+                   'Tỷ lệ đỗ khá thấp (MẠO HIỂM). Bạn có thể thử thách bản thân bằng cách đặt ngành này ở Nguyện vọng 1 hoặc 2, nhưng bắt buộc phải có các phương án dự phòng an toàn hơn ở dưới.'}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setSelectedAnalysis(null)} 
+                style={{ background: 'var(--primary-blue)', color: 'white', border: 'none', padding: '14px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, width: '100%', fontSize: '1.05rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}
+              >
+                Đóng Báo Cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal VIP Paywall */}
+      {showVipModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            width: '90%',
+            maxWidth: '460px',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+            textAlign: 'center',
+            border: '1px solid var(--border-light)'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--primary-blue), var(--primary-purple))',
+              padding: '40px 20px',
+              color: 'white'
+            }}>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
+                Đã đạt giới hạn gói Cơ bản!
+              </h2>
+              <div style={{ width: '40px', height: '4px', background: '#fff', margin: '0 auto', borderRadius: '2px', opacity: 0.5 }}></div>
+            </div>
+            
+            <div style={{ padding: '32px 24px' }}>
+              <p style={{ color: 'var(--text-dark)', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '24px', fontWeight: 500 }}>
+                Bạn chỉ được lưu tối đa <strong>2 nguyện vọng</strong>. Hãy nâng cấp lên gói <span style={{ color: 'var(--primary-purple)', fontWeight: 800 }}>VIP</span> để mở khóa <strong>15 nguyện vọng</strong> cùng toàn quyền sử dụng thuật toán Phân tích Chiến lược!
+              </p>
+              
+              <button 
+                onClick={() => router.push('/upgrade')}
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary-purple), var(--primary-blue))',
+                  color: 'white',
+                  border: 'none',
+                  padding: '16px',
+                  width: '100%',
+                  borderRadius: '12px',
+                  fontSize: '1.15rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 20px rgba(147, 51, 234, 0.3)',
+                  transition: 'transform 0.2s',
+                  marginBottom: '16px'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                Nâng cấp VIP ngay (99k)
+              </button>
+              
+              <button 
+                onClick={() => setShowVipModal(false)}
+                style={{
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  border: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '8px'
+                }}
+              >
+                Để sau
+              </button>
+            </div>
           </div>
         </div>
       )}

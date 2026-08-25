@@ -15,6 +15,8 @@ function AccountDashboard() {
 
   const [editingScores, setEditingScores] = useState<any>({});
   const [editingTranscriptScores, setEditingTranscriptScores] = useState<any>({});
+  const [editingAwards, setEditingAwards] = useState<any>({});
+  const [showTranscript, setShowTranscript] = useState(false);
   const [wishlistPrograms, setWishlistPrograms] = useState<UniversityProgram[]>([]);
   const [viewedPrograms, setViewedPrograms] = useState<UniversityProgram[]>([]);
   
@@ -24,6 +26,9 @@ function AccountDashboard() {
     }
     if (user?.profile?.transcriptScores) {
       setEditingTranscriptScores(user.profile.transcriptScores);
+    }
+    if (user?.profile?.awards) {
+      setEditingAwards(user.profile.awards);
     }
   }, [user]);
 
@@ -63,12 +68,17 @@ function AccountDashboard() {
     setEditingTranscriptScores((prev: any) => ({ ...prev, [subject]: value ? parseFloat(value) : undefined }));
   };
 
+  const handleAwardChange = (type: string, value: string) => {
+    setEditingAwards((prev: any) => ({ ...prev, [type]: value || undefined }));
+  };
+
   const saveScores = () => {
     if (user) {
       updateUserProfile({
         ...(user.profile || { maxFee: 30000000, location: 'all', traits: [] }),
         scores: editingScores,
-        transcriptScores: editingTranscriptScores
+        transcriptScores: editingTranscriptScores,
+        awards: editingAwards
       });
       
       const newNotif = { id: Date.now(), text: 'Cập nhật điểm thành công!', time: Date.now() };
@@ -257,39 +267,83 @@ function AccountDashboard() {
                 ))}
               </div>
 
-              <h3 style={{ fontSize: '1.2rem', color: 'var(--primary-blue)', marginBottom: '16px' }}>Điểm Học Bạ (Lớp 12 / Trung bình 3 năm)</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-                {[
-                  { key: 'toan', label: 'Toán' },
-                  { key: 'van', label: 'Ngữ văn' },
-                  { key: 'anh', label: 'Tiếng Anh' },
-                  { key: 'ly', label: 'Vật lý' },
-                  { key: 'hoa', label: 'Hóa học' },
-                  { key: 'sinh', label: 'Sinh học' },
-                  { key: 'su', label: 'Lịch sử' },
-                  { key: 'dia', label: 'Địa lý' },
-                  { key: 'gdcd', label: 'GDCD' },
-                  { key: 'gpa', label: 'Điểm TB chung (GPA)' },
-                ].map(subject => (
-                  <div key={subject.key}>
-                    <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>{subject.label}</label>
-                    <input 
-                      type="number" 
-                      step="0.1"
-                      value={editingTranscriptScores[subject.key] || ''} 
-                      onChange={(e) => handleTranscriptScoreChange(subject.key, e.target.value)}
-                      placeholder="Chưa nhập"
-                      style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-page)', color: 'var(--text-dark)', fontFamily: 'inherit' }} 
-                    />
-                  </div>
-                ))}
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--primary-blue)', marginBottom: '16px', marginTop: '32px' }}>Giải thưởng & Thành tích</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Giải Tỉnh/Thành phố (Môn văn hoá)</label>
+                  <select 
+                    value={editingAwards.provincialPrize || ''} 
+                    onChange={e => handleAwardChange('provincialPrize', e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-page)', color: 'var(--text-dark)', fontFamily: 'inherit' }}
+                  >
+                    <option value="">Không có</option>
+                    <option value="Nhất">Giải Nhất</option>
+                    <option value="Nhì">Giải Nhì</option>
+                    <option value="Ba">Giải Ba</option>
+                    <option value="Khuyến khích">Giải Khuyến khích</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Giải Quốc gia/Quốc tế</label>
+                  <select 
+                    value={editingAwards.nationalPrize || ''} 
+                    onChange={e => handleAwardChange('nationalPrize', e.target.value)}
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-page)', color: 'var(--text-dark)', fontFamily: 'inherit' }}
+                  >
+                    <option value="">Không có</option>
+                    <option value="KHKT">KHKT Quốc gia</option>
+                    <option value="Olympic">Olympic Quốc tế</option>
+                    <option value="HSG QG">HSG Quốc gia</option>
+                  </select>
+                </div>
               </div>
+
+              {!showTranscript ? (
+                <div style={{ marginBottom: '32px' }}>
+                  <button onClick={() => setShowTranscript(true)} style={{ padding: '10px 20px', fontSize: '0.95rem', fontWeight: 600, background: 'var(--bg-page)', color: 'var(--primary-blue)', border: '1px dashed var(--primary-blue)', borderRadius: '8px', cursor: 'pointer', width: '100%', textAlign: 'center' }}>
+                    + Thêm thông tin Điểm Học Bạ
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '1.2rem', color: 'var(--primary-blue)', margin: 0 }}>Điểm Học Bạ (Lớp 12 / Trung bình 3 năm)</h3>
+                    <button onClick={() => setShowTranscript(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}>Thu gọn</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+                    {[
+                      { key: 'toan', label: 'Toán' },
+                      { key: 'van', label: 'Ngữ văn' },
+                      { key: 'anh', label: 'Tiếng Anh' },
+                      { key: 'ly', label: 'Vật lý' },
+                      { key: 'hoa', label: 'Hóa học' },
+                      { key: 'sinh', label: 'Sinh học' },
+                      { key: 'su', label: 'Lịch sử' },
+                      { key: 'dia', label: 'Địa lý' },
+                      { key: 'gdcd', label: 'GDCD' },
+                      { key: 'gpa', label: 'Điểm TB chung (GPA)' },
+                    ].map(subject => (
+                      <div key={subject.key}>
+                        <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>{subject.label}</label>
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          value={editingTranscriptScores[subject.key] || ''} 
+                          onChange={(e) => handleTranscriptScoreChange(subject.key, e.target.value)}
+                          placeholder="Chưa nhập"
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-page)', color: 'var(--text-dark)', fontFamily: 'inherit' }} 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={saveScores} className="btn-primary" style={{ padding: '12px 24px', fontSize: '1rem', fontWeight: 600 }}>
                   Lưu điểm
                 </button>
-                <button onClick={() => { saveScores(); router.push('/search'); }} style={{ padding: '12px 24px', fontSize: '1rem', fontWeight: 600, background: 'var(--light-blue)', color: 'var(--primary-blue)', border: '1px solid var(--primary-blue)', borderRadius: '8px', cursor: 'pointer' }}>
-                  Phân tích ngay
+                <button onClick={() => { saveScores(); router.push('/profile?step=2'); }} style={{ padding: '12px 24px', fontSize: '1rem', fontWeight: 600, background: 'var(--light-blue)', color: 'var(--primary-blue)', border: '1px solid var(--primary-blue)', borderRadius: '8px', cursor: 'pointer' }}>
+                  Lưu & Đi đến Chọn Ngành
                 </button>
               </div>
             </div>

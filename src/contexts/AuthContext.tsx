@@ -8,6 +8,7 @@ export interface User {
   username: string;
   displayName: string;
   avatar: string;
+  isVip?: boolean;
   profile?: UserProfile;
 }
 
@@ -19,6 +20,7 @@ interface AuthContextType {
   showLoginModal: boolean;
   setShowLoginModal: (show: boolean) => void;
   updateUserProfile: (profile: UserProfile) => void;
+  upgradeToVip: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -95,6 +97,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('wishlistUpdated'));
 
       return true;
+    } else if (username === 'b' && password === 'b') {
+      const savedProfile = localStorage.getItem('userProfile');
+      let userProfile = undefined;
+      if (savedProfile) {
+        try {
+          userProfile = JSON.parse(savedProfile);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const loggedInUser: User = {
+        id: 'user_demo_2',
+        username: 'b',
+        displayName: 'Tân sinh viên',
+        avatar: 'https://i.pravatar.cc/150?u=newbie',
+        profile: userProfile
+      };
+      
+      setUser(loggedInUser);
+      localStorage.setItem('uniprep_user', JSON.stringify(loggedInUser));
+      
+      // Kế thừa dữ liệu wishlist, viewed_majors, usedWishlistQuota hiện tại
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('wishlistUpdated'));
+
+      return true;
     }
     return false;
   };
@@ -112,10 +141,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const upgradeToVip = () => {
+    if (user) {
+      const updatedUser = { ...user, isVip: true };
+      setUser(updatedUser);
+      localStorage.setItem('uniprep_user', JSON.stringify(updatedUser));
+    }
+  };
+
   if (!isLoaded) return null; // Avoid hydration mismatch
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, logout, showLoginModal, setShowLoginModal, updateUserProfile }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, logout, showLoginModal, setShowLoginModal, updateUserProfile, upgradeToVip }}>
       {children}
     </AuthContext.Provider>
   );

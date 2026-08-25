@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { AuthProvider } from "../contexts/AuthContext";
+
+const inter = Inter({ subsets: ["latin", "vietnamese"] });
+
 export const metadata: Metadata = {
   title: "UniNav - Tư vấn Tuyển sinh Đại học",
   description: "Cổng thông tin tư vấn tuyển sinh đại học thông minh.",
@@ -15,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body>
+      <body className={inter.className}>
         <AuthProvider>
           <Navbar />
           <main style={{ padding: '32px 24px', maxWidth: '1200px', margin: '0 auto' }}>

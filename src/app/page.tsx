@@ -8,7 +8,7 @@ export default function Home() {
       <div style={{
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'url(/hero_background.png)',
+        backgroundImage: 'url(/new_hero_background.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         zIndex: -2
@@ -16,9 +16,9 @@ export default function Home() {
       <div style={{
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(140, 153, 170, 0.75)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        backgroundColor: 'rgba(255, 255, 255, 0.45)',
+        backdropFilter: 'blur(2px)',
+        WebkitBackdropFilter: 'blur(2px)',
         zIndex: -1
       }} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', textAlign: 'center' }}>
