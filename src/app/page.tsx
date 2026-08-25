@@ -9,11 +9,8 @@ export default function Home() {
       <div style={{
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'url(/hero_background_bright.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        background: 'radial-gradient(circle at center, #dbeafe 0%, #ffffff 70%)',
         zIndex: -2,
-        opacity: 0.8
       }} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', textAlign: 'center' }}>
         <h1 className="animate-fade-in-up delay-1" style={{ fontSize: '4.5rem', marginBottom: '16px', marginTop: '60px' }}>
