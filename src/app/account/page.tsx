@@ -416,7 +416,7 @@ function AccountDashboard() {
                           className="btn-outline" 
                           style={{ padding: '8px 16px', fontSize: '0.9rem' }}
                         >
-                          So sánh
+                          Danh sách nguyện vọng
                         </button>
                       </div>
                     </Link>

@@ -87,7 +87,7 @@ export default function Footer() {
           <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <li><Link href="/profile" style={{ color: '#94a3b8', textDecoration: 'none' }}>Trắc nghiệm RIASEC</Link></li>
             <li><Link href="/search" style={{ color: '#94a3b8', textDecoration: 'none' }}>Phân tích khả năng đỗ</Link></li>
-            <li><Link href="/wishlist" style={{ color: '#94a3b8', textDecoration: 'none' }}>So sánh ngành học</Link></li>
+            <li><Link href="/wishlist" style={{ color: '#94a3b8', textDecoration: 'none' }}>Danh sách nguyện vọng</Link></li>
             <li><Link href="/wishlist" style={{ color: '#94a3b8', textDecoration: 'none' }}>Quản lý nguyện vọng</Link></li>
           </ul>
         </div>

@@ -145,7 +145,7 @@ export default function Navbar() {
     { href: '/profile', label: 'Hồ sơ & Trắc nghiệm' },
     { href: '/search', label: 'Phân tích' },
     { href: '/lookup', label: 'Tra cứu điểm' },
-    { href: '/wishlist', label: 'So sánh' },
+    { href: '/wishlist', label: 'Danh sách nguyện vọng' },
   ];
 
   return (
