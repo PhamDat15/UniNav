@@ -31,7 +31,7 @@ export default function Footer() {
           <div style={{ display: 'flex', gap: '12px' }}>
             {/* 1. Nút Facebook: Thay thế URL https://facebook.com bằng đường dẫn fanpage của bạn */}
             <a
-              href="https://www.facebook.com/dieu.tran.471299"
+              href="https://www.facebook.com/profile.php?id=61593461504997#"
               target="_blank"
               rel="noopener noreferrer"
               title="Facebook"
