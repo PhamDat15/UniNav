@@ -49,12 +49,12 @@ export default function Home() {
         </div>
 
         <div className="animate-fade-in-up delay-3" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a href="/profile">
-            <button className="btn-primary animate-pulse-glow" style={{ padding: '16px 36px', fontSize: '1.15rem', borderRadius: '30px' }}>
+          <a href="/profile" style={{ textDecoration: 'none' }}>
+            <button className="btn-primary animate-pulse-glow" style={{ padding: '16px 36px', fontSize: '1.15rem', borderRadius: '30px', textDecoration: 'none' }}>
               Bắt đầu Nhập điểm & Tra cứu
             </button>
           </a>
-          <a href="/hvnh">
+          <a href="/hvnh" style={{ textDecoration: 'none' }}>
             <button style={{
               padding: '16px 32px',
               fontSize: '1.15rem',
@@ -68,10 +68,11 @@ export default function Home() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
+              textDecoration: 'none',
               transition: 'all 0.3s ease'
             }}>
-              <span>🏛️ HVNH Engine</span>
-              <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px' }}>Đề án 2026</span>
+              <span style={{ textDecoration: 'none' }}>HVNH Engine</span>
+              <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px', textDecoration: 'none' }}>Đề án 2026</span>
             </button>
           </a>
         </div>

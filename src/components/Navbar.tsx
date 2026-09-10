@@ -136,14 +136,14 @@ export default function Navbar() {
 
   const navbarLinks = [
     { href: '/', label: 'Trang chủ' },
-    { href: '/hvnh', label: 'HVNH Engine 🏛️' },
+    { href: '/hvnh', label: 'HVNH Engine' },
     { href: '/hot-majors', label: 'Ngành Hot 🔥' },
     { href: '/community', label: 'Cộng đồng' },
     { href: '/lookup', label: 'Tra cứu' },
   ];
 
   const toolsLinks = [
-    { href: '/hvnh', label: '🏛️ Tối ưu xét tuyển HVNH (Pilot)' },
+    { href: '/hvnh', label: 'Tối ưu xét tuyển HVNH (Pilot)' },
     { href: '/profile', label: 'Hồ sơ & Trắc nghiệm' },
     { href: '/search', label: 'Phân tích' },
     { href: '/lookup', label: 'Tra cứu điểm' },
