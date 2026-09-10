@@ -20,10 +20,58 @@ export default function Home() {
         <p className="animate-fade-in-up delay-2" style={{ fontSize: '1.2rem', color: 'var(--text-muted)', maxWidth: '600px', marginBottom: '40px', lineHeight: '1.6' }}>
           Khám phá ngành học phù hợp nhất với tính cách của bạn, dự đoán khả năng đỗ và lập chiến lược nguyện vọng tối ưu bằng hệ thống Trí tuệ nhân tạo.
         </p>
-        <div className="animate-fade-in-up delay-3" style={{ display: 'flex', gap: '16px' }}>
+        {/* Banner Pilot Test HVNH */}
+        <div className="animate-fade-in-up" style={{
+          marginBottom: '20px',
+          background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.08) 0%, rgba(244, 63, 94, 0.15) 100%)',
+          border: '1px solid rgba(225, 29, 72, 0.3)',
+          padding: '8px 18px',
+          borderRadius: '50px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <span style={{
+            background: '#e11d48',
+            color: 'white',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            padding: '2px 8px',
+            borderRadius: '20px',
+            letterSpacing: '0.5px'
+          }}>BETA PILOT</span>
+          <span style={{ fontSize: '0.9rem', color: '#881337', fontWeight: 600 }}>
+            Đã tích hợp: <strong>Hệ thống tối ưu xét tuyển Học viện Ngân hàng (HVNH)</strong>
+          </span>
+          <a href="/hvnh" style={{ color: '#e11d48', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none', marginLeft: '4px' }}>
+            Trải nghiệm ngay &rarr;
+          </a>
+        </div>
+
+        <div className="animate-fade-in-up delay-3" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <a href="/profile">
-            <button className="btn-primary animate-pulse-glow" style={{ padding: '16px 40px', fontSize: '1.2rem', borderRadius: '30px' }}>
-              Bắt đầu bài Nhập điểm & Tra cứu
+            <button className="btn-primary animate-pulse-glow" style={{ padding: '16px 36px', fontSize: '1.15rem', borderRadius: '30px' }}>
+              Bắt đầu Nhập điểm & Tra cứu
+            </button>
+          </a>
+          <a href="/hvnh">
+            <button style={{
+              padding: '16px 32px',
+              fontSize: '1.15rem',
+              borderRadius: '30px',
+              background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+              color: 'white',
+              border: 'none',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(225, 29, 72, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.3s ease'
+            }}>
+              <span>🏛️ HVNH Engine</span>
+              <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.25)', padding: '2px 8px', borderRadius: '12px' }}>Đề án 2026</span>
             </button>
           </a>
         </div>

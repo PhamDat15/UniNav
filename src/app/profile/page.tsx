@@ -187,11 +187,58 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Khu vực & Đối tượng ưu tiên */}
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '14px', color: 'var(--text-dark)' }}>Khu vực & Đối tượng Ưu tiên (Đồng bộ xét tuyển)</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Khu vực ưu tiên</label>
+                  <select 
+                    value={profile.area || 'KV3'} 
+                    onChange={e => setProfile({ ...profile, area: e.target.value as any })} 
+                    style={inputStyle}
+                  >
+                    <option value="KV1">Khu vực 1 (+0.75đ)</option>
+                    <option value="KV2-NT">Khu vực 2 - Nông thôn (+0.50đ)</option>
+                    <option value="KV2">Khu vực 2 (+0.25đ)</option>
+                    <option value="KV3">Khu vực 3 (Không cộng điểm)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Đối tượng ưu tiên</label>
+                  <select 
+                    value={profile.priorityGroup || 'none'} 
+                    onChange={e => setProfile({ ...profile, priorityGroup: e.target.value as any })} 
+                    style={inputStyle}
+                  >
+                    <option value="none">Không thuộc diện ưu tiên chính sách</option>
+                    <option value="UT1">Đối tượng 01 - 04 (+2.0đ)</option>
+                    <option value="UT2">Đối tượng 05 - 07 (+1.0đ)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Loại trường THPT</label>
+                  <select 
+                    value={profile.schoolType || 'standard'} 
+                    onChange={e => setProfile({ ...profile, schoolType: e.target.value as any })} 
+                    style={inputStyle}
+                  >
+                    <option value="standard">Trường THPT Thường</option>
+                    <option value="specialized">Trường THPT Chuyên (+0.5đ xét thưởng)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div style={{ background: 'var(--light-blue)', padding: '16px', borderRadius: '8px', border: '1px solid var(--light-blue-hover)' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--primary-blue)' }}>Chứng chỉ & Đánh giá năng lực (Tùy chọn)</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--primary-blue)' }}>Chứng chỉ Quốc tế & Đánh giá năng lực (Tùy chọn)</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>IELTS (0 - 9.0)</label><input type="number" step="0.5" max="9" value={profile.scores.ielts || ''} onChange={e => updateScore('ielts', e.target.value)} style={inputStyle} placeholder="Ví dụ: 6.5" /></div>
+                <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>TOEFL iBT (46 - 120)</label><input type="number" max="120" value={profile.scores.toefl || ''} onChange={e => updateScore('toefl', e.target.value)} style={inputStyle} placeholder="Ví dụ: 85" /></div>
+                <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>SAT (thang 1600)</label><input type="number" max="1600" value={profile.scores.sat || ''} onChange={e => updateScore('sat', e.target.value)} style={inputStyle} placeholder="Ví dụ: 1300" /></div>
+                <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ACT (thang 36)</label><input type="number" max="36" value={profile.scores.act || ''} onChange={e => updateScore('act', e.target.value)} style={inputStyle} placeholder="Ví dụ: 28" /></div>
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ĐGNL ĐHQGHN (HSA)</label><input type="number" max="150" placeholder="Thang 150" value={profile.scores.hsa || ''} onChange={e => updateScore('hsa', e.target.value)} style={inputStyle} /></div>
+                <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ĐGNL V-SAT</label><input type="number" max="450" placeholder="Thang 450" value={profile.scores.vsat || ''} onChange={e => updateScore('vsat', e.target.value)} style={inputStyle} /></div>
                 <div><label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ĐGTD Bách Khoa (TSA)</label><input type="number" max="100" placeholder="Thang 100" value={profile.scores.tsa || ''} onChange={e => updateScore('tsa', e.target.value)} style={inputStyle} /></div>
               </div>
             </div>

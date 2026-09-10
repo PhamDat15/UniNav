@@ -14,9 +14,21 @@ export interface ExamScores {
   hsa?: number; // ĐGNL ĐHQGHN (thang 150)
   tsa?: number; // ĐGTD Bách Khoa (thang 100)
   gpa?: number; // Học bạ (thang 10)
+  toefl?: number;
+  sat?: number;
+  act?: number;
+  jlpt?: number;
+  vsat?: number;
 }
 
 export interface UserProfile {
+  fullName?: string;
+  phone?: string;
+  area?: 'KV1' | 'KV2-NT' | 'KV2' | 'KV3';
+  priorityGroup?: 'none' | 'UT1' | 'UT2';
+  schoolType?: 'specialized' | 'standard';
+  englishCertType?: 'none' | 'ielts' | 'toefl_ibt' | 'sat' | 'act' | 'jlpt';
+  certScore?: number;
   scores: ExamScores;
   transcriptScores?: ExamScores;
   maxFee: number;
