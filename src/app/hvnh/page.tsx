@@ -1235,7 +1235,7 @@ export default function HVNHAdmissionPage() {
               Điểm xét = Tổng 3 môn thi THPT + Điểm ưu tiên + Điểm khuyến khích (nếu có)
             </div>
             <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
-              Thí sinh có chứng chỉ IELTS $\ge 5.5$ có thể sử dụng điểm quy đổi (8.5 - 10.0đ) để thay thế môn Tiếng Anh trong tổ hợp thi nếu có lợi hơn.
+              Thí sinh có chứng chỉ IELTS ≥ 5.5 có thể sử dụng điểm quy đổi (8.5 - 10.0đ) để thay thế môn Tiếng Anh trong tổ hợp thi nếu có lợi hơn.
             </p>
           </div>
 
